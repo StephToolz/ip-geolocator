@@ -124,8 +124,7 @@
             }
 
             // Použití CORS proxy pro obejití blokování na GitHub Pages
-            let url = `https://corsproxy.io/?` + encodeURIComponent(targetUrl);
-
+            let url = `https://api.allorigins.win/raw?url=` + encodeURIComponent(targetUrl);
             try {
                 const response = await fetch(url);
                 

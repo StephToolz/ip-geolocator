@@ -1,0 +1,557 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>IP lookup — kde je tahle adresa?</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink: #0E1420;
+    --ink-surface: #161E2E;
+    --ink-surface-2: #1D2740;
+    --ink-line: #2A3550;
+    --ink-text: #EAEEF6;
+    --ink-dim: #8993A6;
+
+    --paper: #F2F4F7;
+    --paper-surface: #FFFFFF;
+    --paper-surface-2: #E7EAF0;
+    --paper-line: #D6DBE4;
+    --paper-text: #10161F;
+    --paper-dim: #5B6472;
+
+    --amber: #FFB454;
+    --amber-dim: #C9893A;
+    --teal: #37B6A0;
+    --red: #E2685A;
+
+    --bg: var(--ink);
+    --surface: var(--ink-surface);
+    --surface-2: var(--ink-surface-2);
+    --line: var(--ink-line);
+    --text: var(--ink-text);
+    --dim: var(--ink-dim);
+
+    --radius: 14px;
+    --font-head: 'Space Grotesk', system-ui, sans-serif;
+    --font-mono: 'JetBrains Mono', ui-monospace, monospace;
+  }
+
+  [data-theme="light"]{
+    --bg: var(--paper);
+    --surface: var(--paper-surface);
+    --surface-2: var(--paper-surface-2);
+    --line: var(--paper-line);
+    --text: var(--paper-text);
+    --dim: var(--paper-dim);
+  }
+
+  *{ box-sizing: border-box; }
+
+  body{
+    margin:0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-head);
+    transition: background .25s ease, color .25s ease;
+    min-height: 100vh;
+  }
+
+  a{ color: inherit; }
+
+  .wrap{
+    max-width: 880px;
+    margin: 0 auto;
+    padding: 28px 24px 80px;
+  }
+
+  header{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    margin-bottom: 56px;
+  }
+
+  .brand{
+    display:flex;
+    align-items:baseline;
+    gap: 10px;
+    font-weight: 700;
+    font-size: 1.05rem;
+    letter-spacing: 0.01em;
+  }
+  .brand span{
+    font-family: var(--font-mono);
+    color: var(--amber);
+    font-weight: 500;
+    font-size: 0.85rem;
+  }
+
+  .theme-btn{
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    border: 1px solid var(--line);
+    background: var(--surface);
+    color: var(--text);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    cursor:pointer;
+    transition: border-color .2s ease, transform .2s ease;
+  }
+  .theme-btn:hover{ border-color: var(--amber); }
+  .theme-btn:active{ transform: scale(0.92); }
+  .theme-btn svg{ width: 18px; height: 18px; }
+
+  .hero{
+    text-align:center;
+    margin-bottom: 40px;
+  }
+  .hero h1{
+    font-size: clamp(1.6rem, 4vw, 2.3rem);
+    line-height: 1.25;
+    font-weight: 600;
+    margin: 0 0 8px;
+    max-width: 30ch;
+    margin-inline: auto;
+  }
+  .hero p{
+    color: var(--dim);
+    margin: 0;
+    font-size: 0.98rem;
+  }
+
+  .readout{
+    margin: 36px auto 28px;
+    text-align:center;
+  }
+  .readout .ip{
+    font-family: var(--font-mono);
+    font-size: clamp(1.6rem, 6vw, 2.6rem);
+    font-weight: 600;
+    letter-spacing: 0.01em;
+    color: var(--amber);
+    word-break: break-all;
+    min-height: 1.4em;
+  }
+  .readout .status{
+    font-family: var(--font-mono);
+    font-size: 0.8rem;
+    color: var(--dim);
+    margin-top: 6px;
+    min-height: 1.2em;
+  }
+  .readout .status.err{ color: var(--red); }
+
+  form.search{
+    display:flex;
+    gap: 10px;
+    max-width: 520px;
+    margin: 0 auto 8px;
+  }
+  form.search input{
+    flex:1;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    color: var(--text);
+    border-radius: 10px;
+    padding: 13px 16px;
+    font-family: var(--font-mono);
+    font-size: 0.95rem;
+    outline:none;
+    transition: border-color .2s ease;
+  }
+  form.search input::placeholder{ color: var(--dim); }
+  form.search input:focus{ border-color: var(--amber); }
+  form.search input:focus-visible{ outline: 2px solid var(--amber); outline-offset: 2px; }
+
+  form.search button{
+    background: var(--amber);
+    color: #1A1200;
+    border: none;
+    border-radius: 10px;
+    padding: 0 22px;
+    font-family: var(--font-head);
+    font-weight: 600;
+    font-size: 0.95rem;
+    cursor: pointer;
+    transition: filter .15s ease, transform .15s ease;
+  }
+  form.search button:hover{ filter: brightness(1.08); }
+  form.search button:active{ transform: scale(0.97); }
+  form.search button:disabled{ opacity: 0.55; cursor: default; }
+  form.search button:focus-visible{ outline: 2px solid var(--amber); outline-offset: 2px; }
+
+  .hint{
+    text-align:center;
+    font-size: 0.82rem;
+    color: var(--dim);
+    margin-bottom: 8px;
+  }
+  .hint button{
+    background:none;
+    border:none;
+    color: var(--teal);
+    font-family: var(--font-head);
+    font-size: 0.82rem;
+    cursor:pointer;
+    padding:0;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+
+  .grid{
+    display:grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+    margin-top: 44px;
+  }
+  @media (max-width: 620px){
+    .grid{ grid-template-columns: 1fr; }
+    form.search{ flex-direction: column; }
+  }
+
+  .card{
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 20px 22px;
+  }
+  .card.wide{ grid-column: 1 / -1; }
+
+  .card h2{
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--dim);
+    margin: 0 0 14px;
+    letter-spacing: 0.02em;
+  }
+
+  .flag{ font-size: 1.7rem; line-height: 1; margin-right: 8px; }
+
+  .place{
+    display:flex;
+    align-items:center;
+    margin-bottom: 4px;
+  }
+  .place .city{
+    font-size: 1.25rem;
+    font-weight: 600;
+  }
+  .place .country{
+    color: var(--dim);
+    font-size: 0.95rem;
+    margin-top: 2px;
+  }
+
+  .kv{
+    display:grid;
+    grid-template-columns: auto 1fr;
+    gap: 7px 14px;
+    font-size: 0.9rem;
+    margin-top: 4px;
+  }
+  .kv dt{ color: var(--dim); }
+  .kv dd{
+    margin:0;
+    font-family: var(--font-mono);
+    font-size: 0.85rem;
+    text-align:right;
+    word-break: break-word;
+  }
+
+  .clock{
+    font-family: var(--font-mono);
+    font-size: 2.1rem;
+    font-weight: 500;
+    color: var(--teal);
+    margin: 4px 0 2px;
+  }
+  .clock-sub{ color: var(--dim); font-size: 0.85rem; }
+
+  .map-frame{
+    width: 100%;
+    height: 220px;
+    border-radius: 10px;
+    border: 1px solid var(--line);
+    overflow: hidden;
+    margin-top: 12px;
+  }
+  .map-frame iframe{ width:100%; height:100%; border:0; filter: saturate(0.85); }
+  [data-theme="dark"] .map-frame iframe{ filter: saturate(0.7) invert(0.92) hue-rotate(180deg) brightness(0.95); }
+
+  .badge{
+    display:inline-block;
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    padding: 3px 9px;
+    border-radius: 999px;
+    border: 1px solid var(--line);
+    color: var(--dim);
+    margin-top: 10px;
+  }
+  .badge.proxy{ color: var(--red); border-color: var(--red); }
+  .badge.clean{ color: var(--teal); border-color: var(--teal); }
+
+  footer{
+    text-align:center;
+    color: var(--dim);
+    font-size: 0.78rem;
+    margin-top: 60px;
+  }
+  footer a{ text-decoration: underline; text-underline-offset: 2px; }
+
+  .skeleton{
+    background: linear-gradient(90deg, var(--surface) 25%, var(--surface-2) 50%, var(--surface) 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.3s infinite;
+    border-radius: 6px;
+    height: 14px;
+  }
+  @keyframes shimmer{
+    0%{ background-position: 200% 0; }
+    100%{ background-position: -200% 0; }
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    .skeleton{ animation: none; }
+    * { transition: none !important; }
+  }
+</style>
+</head>
+<body data-theme="dark">
+<div class="wrap">
+
+  <header>
+    <div class="brand">IP lookup <span>// ip2location.io</span></div>
+    <button class="theme-btn" id="themeBtn" aria-label="Přepnout světlý/tmavý režim" type="button"></button>
+  </header>
+
+  <div class="hero">
+    <h1>Zjisti, odkud adresa mluví</h1>
+    <p>Zadej IPv4 nebo IPv6 adresu, nebo nech pole prázdné a zjistíme tu tvoji.</p>
+  </div>
+
+  <div class="readout">
+    <div class="ip" id="ipReadout">—</div>
+    <div class="status" id="statusText">Načítám tvoji IP adresu…</div>
+  </div>
+
+  <form class="search" id="searchForm">
+    <input type="text" id="ipInput" placeholder="např. 8.8.8.8 nebo 2606:4700:4700::1111" autocomplete="off" spellcheck="false">
+    <button type="submit" id="searchBtn">Hledat</button>
+  </form>
+  <div class="hint">nebo <button type="button" id="myIpBtn">použít moji vlastní IP</button></div>
+
+  <div class="grid" id="resultGrid" style="display:none;">
+
+    <div class="card">
+      <h2>Umístění</h2>
+      <div class="place">
+        <span class="flag" id="flagEl"></span>
+        <div>
+          <div class="city" id="cityEl">—</div>
+          <div class="country" id="countryEl">—</div>
+        </div>
+      </div>
+      <dl class="kv" style="margin-top:14px;">
+        <dt>Region</dt><dd id="regionEl">—</dd>
+        <dt>PSČ</dt><dd id="zipEl">—</dd>
+        <dt>Kontinent</dt><dd id="continentEl">—</dd>
+      </dl>
+      <span class="badge" id="proxyBadge">–</span>
+    </div>
+
+    <div class="card">
+      <h2>Poskytovatel a síť</h2>
+      <dl class="kv">
+        <dt>ISP</dt><dd id="ispEl">—</dd>
+        <dt>ASN</dt><dd id="asnEl">—</dd>
+        <dt>Organizace</dt><dd id="asEl">—</dd>
+        <dt>Typ využití</dt><dd id="usageEl">—</dd>
+      </dl>
+    </div>
+
+    <div class="card">
+      <h2>Časové pásmo</h2>
+      <div class="clock" id="clockEl">--:--:--</div>
+      <div class="clock-sub" id="clockSubEl">UTC —</div>
+    </div>
+
+    <div class="card wide">
+      <h2>Souřadnice</h2>
+      <dl class="kv" style="grid-template-columns: auto 1fr auto 1fr;">
+        <dt>Zeměpisná šířka</dt><dd id="latEl">—</dd>
+        <dt>Zeměpisná délka</dt><dd id="lonEl">—</dd>
+      </dl>
+      <div class="map-frame" id="mapFrame"></div>
+    </div>
+
+  </div>
+
+  <footer>
+    Data poskytuje <a href="https://www.ip2location.io/" target="_blank" rel="noopener">IP2Location.io</a>. Poloha je odvozena z IP adresy a je pouze orientační.
+  </footer>
+
+</div>
+
+<script>
+  const API_KEY = "10D1DD103AB750F405A5CD9039EA10A9";
+  const API_BASE = "https://api.ip2location.io/";
+
+  const $ = (id) => document.getElementById(id);
+  const els = {
+    themeBtn: $('themeBtn'), ipReadout: $('ipReadout'), statusText: $('statusText'),
+    form: $('searchForm'), input: $('ipInput'), searchBtn: $('searchBtn'), myIpBtn: $('myIpBtn'),
+    grid: $('resultGrid'), flag: $('flagEl'), city: $('cityEl'), country: $('countryEl'),
+    region: $('regionEl'), zip: $('zipEl'), continent: $('continentEl'), proxyBadge: $('proxyBadge'),
+    isp: $('ispEl'), asn: $('asnEl'), as: $('asEl'), usage: $('usageEl'),
+    clock: $('clockEl'), clockSub: $('clockSubEl'), lat: $('latEl'), lon: $('lonEl'),
+    mapFrame: $('mapFrame'),
+  };
+
+  const sunIcon = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="4.2"/><path d="M12 2.5v2.5M12 19v2.5M4.2 4.2l1.8 1.8M18 18l1.8 1.8M2.5 12H5M19 12h2.5M4.2 19.8l1.8-1.8M18 6l1.8-1.8"/></svg>';
+  const moonIcon = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 14.5A8.5 8.5 0 1 1 9.5 4a6.8 6.8 0 0 0 10.5 10.5Z"/></svg>';
+
+  let clockTimer = null;
+
+  function applyTheme(theme){
+    document.body.setAttribute('data-theme', theme);
+    els.themeBtn.innerHTML = theme === 'dark' ? sunIcon : moonIcon;
+    localStorage.setItem('ip-lookup-theme', theme);
+  }
+  function initTheme(){
+    const saved = localStorage.getItem('ip-lookup-theme');
+    const prefersLight = window.matchMedia('(prefers-color-scheme: light)').matches;
+    applyTheme(saved || (prefersLight ? 'light' : 'dark'));
+  }
+  els.themeBtn.addEventListener('click', () => {
+    const current = document.body.getAttribute('data-theme');
+    applyTheme(current === 'dark' ? 'light' : 'dark');
+  });
+
+  function flagEmoji(cc){
+    if(!cc || cc.length !== 2 || cc === '-') return '🏳️';
+    const upper = cc.toUpperCase();
+    return String.fromCodePoint(...[...upper].map(c => 127397 + c.charCodeAt(0)));
+  }
+
+  function setStatus(text, isErr){
+    els.statusText.textContent = text;
+    els.statusText.classList.toggle('err', !!isErr);
+  }
+
+  function parseOffset(tz){
+    // ip2location.io "time_zone" looks like "+02:00" or "-05:45"
+    if(!tz) return null;
+    const m = /^([+-])(\d{2}):(\d{2})$/.exec(tz.trim());
+    if(!m) return null;
+    const sign = m[1] === '-' ? -1 : 1;
+    return sign * (parseInt(m[2],10) * 60 + parseInt(m[3],10));
+  }
+
+  function startClock(offsetMinutes, tzLabel){
+    if(clockTimer) clearInterval(clockTimer);
+    if(offsetMinutes === null){
+      els.clock.textContent = '--:--:--';
+      els.clockSub.textContent = 'časové pásmo neznámé';
+      return;
+    }
+    const tick = () => {
+      const now = new Date();
+      const utcMs = now.getTime() + now.getTimezoneOffset() * 60000;
+      const local = new Date(utcMs + offsetMinutes * 60000);
+      const hh = String(local.getHours()).padStart(2,'0');
+      const mm = String(local.getMinutes()).padStart(2,'0');
+      const ss = String(local.getSeconds()).padStart(2,'0');
+      els.clock.textContent = `${hh}:${mm}:${ss}`;
+    };
+    tick();
+    clockTimer = setInterval(tick, 1000);
+    els.clockSub.textContent = `UTC ${tzLabel}`;
+  }
+
+  function renderMap(lat, lon){
+    if(lat === undefined || lon === undefined || lat === null || lon === null){
+      els.mapFrame.innerHTML = '';
+      return;
+    }
+    const d = 0.35;
+    const bbox = `${lon-d},${lat-d},${lon+d},${lat+d}`;
+    const src = `https://www.openstreetmap.org/export/embed.html?bbox=${bbox}&layer=mapnik&marker=${lat},${lon}`;
+    els.mapFrame.innerHTML = `<iframe src="${src}" loading="lazy" title="Mapa polohy"></iframe>`;
+  }
+
+  function renderResult(data){
+    els.ipReadout.textContent = data.ip || '—';
+    els.flag.textContent = flagEmoji(data.country_code);
+    els.city.textContent = data.city_name || 'Neznámé město';
+    els.country.textContent = data.country_name || data.country_code || 'Neznámá země';
+    els.region.textContent = data.region_name || '—';
+    els.zip.textContent = data.zip_code || '—';
+    els.continent.textContent = data.continent && data.continent.name ? data.continent.name : '—';
+
+    els.isp.textContent = data.isp || '—';
+    els.asn.textContent = data.asn || '—';
+    els.as.textContent = data.as || '—';
+    els.usage.textContent = data.usage_type || '—';
+
+    const isProxy = data.is_proxy === true;
+    els.proxyBadge.textContent = isProxy ? 'Proxy / VPN detekováno' : 'Bez proxy';
+    els.proxyBadge.className = 'badge ' + (isProxy ? 'proxy' : 'clean');
+
+    els.lat.textContent = data.latitude !== undefined ? data.latitude.toFixed(4) + '°' : '—';
+    els.lon.textContent = data.longitude !== undefined ? data.longitude.toFixed(4) + '°' : '—';
+
+    startClock(parseOffset(data.time_zone), data.time_zone || '?');
+    renderMap(data.latitude, data.longitude);
+
+    els.grid.style.display = 'grid';
+  }
+
+  async function lookup(ip){
+    setStatus(ip ? `Hledám ${ip}…` : 'Zjišťuji tvoji IP adresu…');
+    els.searchBtn.disabled = true;
+    els.grid.style.display = 'none';
+    els.ipReadout.textContent = ip || '…';
+
+    try{
+      const url = `${API_BASE}?key=${encodeURIComponent(API_KEY)}${ip ? `&ip=${encodeURIComponent(ip)}` : ''}&format=json`;
+      const res = await fetch(url);
+      const data = await res.json();
+
+      if(!res.ok || data.error){
+        const msg = (data.error && data.error.error_message) || `Chyba serveru (${res.status})`;
+        throw new Error(msg);
+      }
+
+      renderResult(data);
+      setStatus(`Naposledy aktualizováno ${new Date().toLocaleTimeString('cs-CZ')}`);
+    }catch(err){
+      setStatus(err.message || 'Nepodařilo se načíst data. Zkontroluj adresu a zkus to znovu.', true);
+      els.ipReadout.textContent = ip || '—';
+    }finally{
+      els.searchBtn.disabled = false;
+    }
+  }
+
+  els.form.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const val = els.input.value.trim();
+    lookup(val || undefined);
+  });
+
+  els.myIpBtn.addEventListener('click', () => {
+    els.input.value = '';
+    lookup(undefined);
+  });
+
+  initTheme();
+  lookup(undefined);
+</script>
+</body>
+</html>

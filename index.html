@@ -114,31 +114,34 @@
         myIpBtn.addEventListener('click', () => performLookup(''));
 
         async function performLookup(ipQuery) {
-            statusMessage.textContent = 'Searching...';
-            resultBox.classList.add('hidden');
+    statusMessage.textContent = 'Searching...';
+    resultBox.classList.add('hidden');
 
-            let url = `https://api.ip2location.io/?key=${API_KEY}`;
-            if (ipQuery !== '') {
-                url += `&ip=${encodeURIComponent(ipQuery)}`;
-            }
+    let targetUrl = `https://api.ip2location.io/?key=${API_KEY}`;
+    if (ipQuery !== '') {
+        targetUrl += `&ip=${encodeURIComponent(ipQuery)}`;
+    }
 
-            try {
-                const response = await fetch(url);
-                if (!response.ok) throw new Error('Failed to fetch data from API.');
-                
-                const data = await response.json();
-                
-                if (data.error) {
-                    throw new Error(data.error.message || 'API returned an error.');
-                }
+    // Tady se použije CORS proxy
+    let url = `https://corsproxy.io/?` + encodeURIComponent(targetUrl);
 
-                statusMessage.textContent = '';
-                displayResults(data);
-
-            } catch (error) {
-                statusMessage.textContent = error.message;
-            }
+    try {
+        const response = await fetch(url);
+        if (!response.ok) throw new Error('Failed to fetch data from API.');
+        
+        const data = await response.json();
+        
+        if (data.error) {
+            throw new Error(data.error.message || 'API returned an error.');
         }
+
+        statusMessage.textContent = '';
+        displayResults(data);
+
+    } catch (error) {
+        statusMessage.textContent = error.message;
+    }
+}
 
         function displayResults(data) {
             document.getElementById('resIp').textContent = data.ip || 'N/A';

